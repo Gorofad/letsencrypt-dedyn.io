@@ -1,22 +1,19 @@
 #FROM hypriot/rpi-alpine
 FROM gorofad/rpi-python
 
-RUN apk update && \
-    apk upgrade && \
-    apk add wget && \
-    rm -rf /var/cache/apk/*
+COPY docker-entrypoint.sh docker-install-certbot.sh docker-cron.sh /usr/local/bin/
 
-RUN wget --no-check-certificate https://dl.eff.org/certbot-auto -o /data/certbot-auto \
-  && chmod a+x /data/certbot-auto
+RUN chmod a+x /usr/local/bin/docker-entrypoint.sh \
+    /usr/local/bin/docker-install-certbot.sh \
+    /usr/local/bin/docker-cron.sh
 
-RUN wget --no-check-certificate https://raw.githubusercontent.com/desec-io/certbot-hook/master/hook.sh -o /data/hook.sh
+ADD https://dl.eff.org/certbot-auto /data/certbot-auto
+ADD https://raw.githubusercontent.com/desec-io/certbot-hook/master/hook.sh /data/hook.sh 
 
-COPY .dedynauth /data/.dedynauth
+RUN docker-install-certbot.sh
 
-COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY .dedynauth /data/
 
-RUN chmod a+x /usr/local/bin/entrypoint.sh
-
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["/bin/bash"]
