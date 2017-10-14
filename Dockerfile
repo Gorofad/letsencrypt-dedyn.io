@@ -1,20 +1,22 @@
-FROM hypriot/rpi-python
+#FROM hypriot/rpi-alpine
+FROM gorofad/rpi-python
 
-RUN apt-get update && \
-    apt-get install --yes wget
+RUN apk update && \
+    apk upgrade && \
+    apk add wget && \
+    rm -rf /var/cache/apk/*
 
-RUN wget --no-check-certificate https://dl.eff.org/certbot-auto \
-  && chmod a+x certbot-auto
+RUN wget --no-check-certificate https://dl.eff.org/certbot-auto -o /data/certbot-auto \
+  && chmod a+x /data/certbot-auto
 
-RUN wget --no-check-certificate https://raw.githubusercontent.com/desec-io/certbot-hook/master/hook.sh
+RUN wget --no-check-certificate https://raw.githubusercontent.com/desec-io/certbot-hook/master/hook.sh -o /data/hook.sh
 
-COPY .dedynauth .dedynauth
+COPY .dedynauth /data/.dedynauth
 
-RUN ./certbot-auto --manual \
-  --text \
-  --preferred-challenges dns \
-  --manual-auth-hook ./hook.sh \
-  -d YOUR_DOMAIN_NAME \
-  certonly
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod a+x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
 
 CMD ["/bin/bash"]
